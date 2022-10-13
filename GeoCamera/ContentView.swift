@@ -13,9 +13,11 @@ struct ContentView: View {
     @StateObject var camera = CameraModel()
     
     var body: some View {
-        VStack {
+        ZStack {
             CameraPreview(camera: camera)
                 .ignoresSafeArea()
+            
+            Text("henlo")
         }
         .onAppear() {
             camera.Check()
