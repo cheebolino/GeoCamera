@@ -37,12 +37,19 @@ struct ContentView: View {
     }
     
     var userPitch: String {
-        return String(format: "%.1f", motionManager.pitch ?? 0)
+        return String(format: "%.1f", motionManager.pitch * 57.2957795)
 //        return "\(motionManager.pitch)"
     }
     
     var userRoll: String {
         return "\(motionManager.roll)"
+    }
+    
+    var userDistance: String {
+        if motionManager.pitch * 57.2957795 > 90 {
+            return "inf"
+        }
+        return String(format: "%.0f", (locationManager.lastLocation?.altitude ?? 0) / cos(motionManager.pitch) )
     }
     
     var body: some View {
@@ -63,6 +70,10 @@ struct ContentView: View {
                 }
                 
                 Spacer()
+                
+                Text("\(userDistance) m")
+                
+//                Spacer()
                 
                 HStack {
                     Text(userHeading)
@@ -211,7 +222,7 @@ class MotionManager: NSObject, ObservableObject {
                 }
                 
                 if let motionData = motionData {
-                    self.pitch = motionData.attitude.pitch * 57.3
+                    self.pitch = motionData.attitude.pitch
                     self.roll  = motionData.attitude.roll
                 }
             }
