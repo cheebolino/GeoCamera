@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     
+    @State var elevations: [String : Float] = [:]
+    
     @StateObject var camera = CameraModel()
     @StateObject var locationManager = LocationManager()
     @StateObject var motionManager = MotionManager()
@@ -22,7 +24,7 @@ struct ContentView: View {
     }
     
     var userAltitude: String {
-        return String(format: "%.3f", locationManager.lastLocation?.altitude ?? 0)
+        return String(format: "%.1f", locationManager.lastLocation?.altitude ?? 0)
 //        return "\(locationManager.lastLocation?.altitude ?? 0)"
     }
     
@@ -44,7 +46,34 @@ struct ContentView: View {
         if motionManager.pitch * 57.2957795 > 90 {
             return "inf"
         }
-        return String(format: "%.0f", (locationManager.lastLocation?.altitude ?? 0) / cos(motionManager.pitch) )
+        return String(format: "%.0f", Double(userElevationAboveGround)/Double(cos(motionManager.pitch)) )
+    }
+    
+    var userGroundLevel: String {
+        get {
+            let latlng = "\(userLatitude),\(userLongitude)"
+            
+            if elevations[latlng] != nil {
+                return String(elevations[latlng]!)
+            }
+            
+            do {
+                Task {
+                    await loadElevation(latlng: latlng)
+                }
+                
+                //print(openTopoResponce)
+                //elevations[latlng] = openTopoResponse.elevation
+            } catch {
+                print(error.localizedDescription)
+            }
+            
+            return String(elevations[latlng] ?? 0)
+        }
+    }
+    
+    var userElevationAboveGround: Float {
+        return Float(locationManager.lastLocation?.altitude ?? 0) - Float(userGroundLevel)!
     }
     
     var body: some View {
@@ -61,7 +90,14 @@ struct ContentView: View {
                         Text(userLongitude)
                     }
                     Spacer()
-                    Text(userAltitude)
+                    VStack {
+                        Text(userAltitude)
+                        Text(userGroundLevel)
+                            .task {
+                                await loadElevation(latlng: "\(userLatitude),\(userLongitude)")
+                            }
+                        Text("\(userElevationAboveGround)")
+                    }
                 }
                 
                 Spacer()
@@ -88,10 +124,37 @@ struct ContentView: View {
     func round3digits(number: Float?) -> Float {
         return round((number ?? 0) * 1000) / 1000.0
     }
+    
+    func loadElevation(latlng: String) async {
+        guard let url = URL(string: "https://api.opentopodata.org/v1/aster30m?locations=\(latlng)") else {
+            print("Invalid URL")
+            return
+        }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            
+            let openTopoResponse = try JSONDecoder().decode(OpenTopoResponce.self, from: data)
+            
+            elevations[latlng] = openTopoResponse.results.first?.elevation
+        } catch {
+            print("Invalid data")
+        }
+    }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
     }
+}
+
+struct OpenTopoResponce: Decodable {
+    var results: [OpenTopoResult]
+}
+
+struct OpenTopoResult: Decodable {
+    var dataset: String
+    var elevation: Float
+    var location: [String:Float]
 }
