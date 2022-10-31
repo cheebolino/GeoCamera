@@ -50,26 +50,17 @@ struct ContentView: View {
     }
     
     var userGroundLevel: String {
-        get {
-            let latlng = "\(userLatitude),\(userLongitude)"
-            
-            if elevations[latlng] != nil {
-                return String(elevations[latlng]!)
-            }
-            
-            do {
-                Task {
-                    await loadElevation(latlng: latlng)
-                }
-                
-                //print(openTopoResponce)
-                //elevations[latlng] = openTopoResponse.elevation
-            } catch {
-                print(error.localizedDescription)
-            }
-            
-            return String(elevations[latlng] ?? 0)
+        let latlng = "\(userLatitude),\(userLongitude)"
+        
+        if elevations[latlng] != nil {
+            return String(elevations[latlng]!)
         }
+        
+        Task {
+            await loadElevation(latlng: latlng)
+        }
+        
+        return String(elevations[latlng] ?? 0)
     }
     
     var userElevationAboveGround: Float {
