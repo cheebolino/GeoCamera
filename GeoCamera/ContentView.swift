@@ -34,15 +34,7 @@ struct ContentView: View {
     }
     
     var userPitch: String {
-        switch UIDevice.current.orientation {
-        case .portrait:
-            return String(format: "%.1f", motionManager.pitch * 57.2957795)
-        case .landscapeLeft, .landscapeRight:
-            return String(format: "%.1f", motionManager.roll * 57.2957795)
-        default:
-            return ""
-        }
-//        return String(format: "%.1f", motionManager.pitch * 57.2957795)
+        return String(format: "%.1f", devicePitch)
 //        return "\(motionManager.pitch)"
     }
     
@@ -51,10 +43,10 @@ struct ContentView: View {
     }
     
     var userDistance: String {
-        if motionManager.pitch * 57.2957795 > 90 {
+        if devicePitch > 90 {
             return "inf"
         }
-        return String(format: "%.0f", Double(userElevationAboveGround)/Double(cos(motionManager.pitch)) )
+        return String(format: "%.0f", Double(userElevationAboveGround)/Double(cos(devicePitch/57.2957795)) )
     }
     
     var userGroundLevel: String {
@@ -75,6 +67,19 @@ struct ContentView: View {
         return Float(locationManager.lastLocation?.altitude ?? 0) - Float(userGroundLevel)!
     }
     
+    var devicePitch: Double {
+        switch UIDevice.current.orientation {
+        case .portrait:
+            return motionManager.pitch * 57.2957795
+        case .landscapeLeft:
+            return -motionManager.roll * 57.2957795
+        case .landscapeRight:
+            return motionManager.roll * 57.2957795
+        default:
+            return 0
+        }
+    }
+    
     var body: some View {
         ZStack {
             CameraPreview(camera: camera)
@@ -92,9 +97,6 @@ struct ContentView: View {
                     VStack {
                         Text(userAltitude)
                         Text(userGroundLevel)
-//                            .task {
-//                                await loadElevation(latlng: "\(userLatitude),\(userLongitude)")
-//                            }
                         Text(String(format: "%.1f", userElevationAboveGround))
                     }
                 }
