@@ -80,5 +80,44 @@ struct CameraPreview: UIViewRepresentable {
         return view
     }
     
-    func updateUIView(_ uiView: UIViewType, context: Context) { }
+    func updateUIView(_ uiView: UIViewType, context: Context) {
+        
+        switch UIDevice.current.orientation {
+        case .landscapeRight:
+            camera.preview.connection?.videoOrientation = .landscapeLeft
+        case .landscapeLeft:
+            camera.preview.connection?.videoOrientation = .landscapeRight
+        case .portrait:
+            camera.preview.connection?.videoOrientation = .portrait
+        default:
+            break
+        }
+        
+        camera.preview.frame = UIScreen.main.bounds
+    }
+//
+//    override func viewWillLayoutSubviews() {
+//        self.previewLayer.frame = self.view.bounds
+//        if previewLayer.connection.isVideoOrientationSupported {
+//            self.previewLayer.connection.videoOrientation = self.interfaceOrientation(toVideoOrientation: UIApplication.shared.statusBarOrientation)
+//        }
+//    }
+
+    func interfaceOrientation(toVideoOrientation orientation: UIInterfaceOrientation) -> AVCaptureVideoOrientation {
+        switch orientation {
+        case .portrait:
+            return .portrait
+        case .portraitUpsideDown:
+            return .portraitUpsideDown
+        case .landscapeLeft:
+            return .landscapeLeft
+        case .landscapeRight:
+            return .landscapeRight
+        default:
+            break
+        }
+
+        print("Warning - Didn't recognise interface orientation (\(orientation))")
+        return .portrait
+    }
 }

@@ -34,7 +34,15 @@ struct ContentView: View {
     }
     
     var userPitch: String {
-        return String(format: "%.1f", motionManager.pitch * 57.2957795)
+        switch UIDevice.current.orientation {
+        case .portrait:
+            return String(format: "%.1f", motionManager.pitch * 57.2957795)
+        case .landscapeLeft, .landscapeRight:
+            return String(format: "%.1f", motionManager.roll * 57.2957795)
+        default:
+            return ""
+        }
+//        return String(format: "%.1f", motionManager.pitch * 57.2957795)
 //        return "\(motionManager.pitch)"
     }
     
@@ -84,10 +92,10 @@ struct ContentView: View {
                     VStack {
                         Text(userAltitude)
                         Text(userGroundLevel)
-                            .task {
-                                await loadElevation(latlng: "\(userLatitude),\(userLongitude)")
-                            }
-                        Text("\(userElevationAboveGround)")
+//                            .task {
+//                                await loadElevation(latlng: "\(userLatitude),\(userLongitude)")
+//                            }
+                        Text(String(format: "%.1f", userElevationAboveGround))
                     }
                 }
                 
@@ -110,10 +118,6 @@ struct ContentView: View {
         .onAppear() {
             camera.Check()
         }
-    }
-    
-    func round3digits(number: Float?) -> Float {
-        return round((number ?? 0) * 1000) / 1000.0
     }
     
     func loadElevation(latlng: String) async {
